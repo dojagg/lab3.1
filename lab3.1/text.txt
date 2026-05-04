@@ -1,0 +1,5 @@
+       Products for children 5 years old with price below specified        
+
+  N | Name              Price        Age (from - to)      
+  1 | ball              12,40                  2 - 9     
+  2 | car               2,00                  1 - 7     
