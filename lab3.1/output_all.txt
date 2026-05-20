@@ -1,0 +1,6 @@
+       Products for children 5 years old with price below specified        
+
+  N | Name              Price        Age (from - to)      
+  1 | The               0,00                 0 - 0     
+  2 | most              0,00                 0 - 0     
+  3 | expensive         0,00                 0 - 0     

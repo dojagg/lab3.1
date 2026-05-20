@@ -6,6 +6,7 @@
 #define AGE 5
 #define NAME "constructor"
 #define FILE_NAME "text.txt"
+#define INPUT "input.txt"
 
 void input(int amount, goods* s)                                                             // функция для заполнения полей структуры
 {
@@ -35,12 +36,16 @@ void input(int amount, goods* s)                                                
 void input_from_file(int num, goods* ptr)                                                // ввод из файла
 {
 	FILE* fl;
-    fopen_s(&fl, "input.txt", "r");                                                      // открытие файла для чтения
-	if (fl == NULL)
+	char filename[30] = INPUT;
+	while (fopen_s(&fl, filename, "r") != 0 || fl == NULL)
 	{
-		printf("нет файла");
-		exit(1);
+		printf("\nФайл не найден");
+		printf("\nВведите имя файла для открытия - ");
+		scanf_s("%s", filename, 30);
+		clear_buffer();
 	}
+	
+
 	for (int i = 0; i < num; i++)                                                        // считывание информации о товарах
 	{
 		ptr[i].name = (char*)calloc(MAX + 1, sizeof(char));
@@ -138,7 +143,7 @@ void output(goods* names_ind, goods* ptr, int end_size, int choice, int choice1)
 	{
 		exit(1);
 	}
-	if (choice == 1)                                                                                          // вывод информации о товарах
+	if (choice == 1)                                                                                         // вывод информации о товарах
 	{
 		if (end_size == 0)
 		{
@@ -158,8 +163,9 @@ void output(goods* names_ind, goods* ptr, int end_size, int choice, int choice1)
 					names_ind[i].min,
 					names_ind[i].max);
 			}
+			printf("\nWritted successfully!");
 		}
-	}
+	}	
 	else if (choice == 2)                                                                                 // вывод информации о конструкторе
 	{
 		if (ptr == NULL)
@@ -169,40 +175,84 @@ void output(goods* names_ind, goods* ptr, int end_size, int choice, int choice1)
 		else
 		{
 			fprintf(fl, "\nThe most expensive constructor\n");
-			fprintf(fl, "       Products for children %d years old with price below specified        \n", AGE); // вывод информации о товарах
 			fprintf(fl, "\n  N | Name              Price        Age (from - to)      \n");
-			fprintf(fl, "      | %-15s   %3.2f                 %d - %d     \n",
+			fprintf(fl, "   | %-15s   %3.2f                 %d - %d     \n",
 				
 			    (*ptr).name,
 				(*ptr).price,
 				(*ptr).min,
 				(*ptr).max);
+			printf("\nWritted successfully!");
 		}
+		
 	}
 	if (choice1 == 2 && fl != NULL) 
 	{
-		fclose(fl);                                                                                     // закрытие файла
+		fclose(fl);                                                                                      // закрытие файла
 	}
 }
-
-int choose_sort()                                                                                      // выбор фильтра
+void output_all(goods* s, int amount)
 {
-	int choice = 0;
-	printf("\nКакие сведения хотите получить?");
-	printf("\n1. Названия товаров, у которых цена не превышает заданную, и подходят детям 5 лет.");
-	printf("\n2. Цену самого дорогого конструктора.");
-	printf("\nВведите номер пункта - ");
-	check_num(&choice);
+	FILE* fl = NULL;
+	fopen_s(&fl, "output_all.txt", "w");
+	if (fl == NULL)
+	{
+		exit(1);
+	}
+	
+	if (amount == 0)
+	{
+		fprintf(fl, "\nNo products matching the price and age criteria!\n");                               // если нет подходящих товаров
+	}
+	else
+	{
+		fprintf(fl, "       Products for children %d years old with price below specified        \n", AGE); // вывод информации о товарах
+		fprintf(fl, "\n  N | Name              Price        Age (from - to)      \n");
+
+		for (int i = 0; i < amount; i++)
+		{
+			fprintf(fl, " %2d | %-15s   %3.2f                 %d - %d     \n",
+				i + 1,
+				s[i].name,
+				s[i].price,
+				s[i].min,
+				s[i].max);
+		}
+		printf("\nWritted successfully!");
+	}
+	fclose(fl);
+}
+
+int choose_sort(float border_price)                                                                      // выбор фильтра
+{
+	int choice;
+	printf("\nВарианты вывода:");
+	printf("\n1.Товары для детей %d лет с ценой < %.2f", AGE, border_price);
+	printf("\n2.Самый дорогой конструктор");
+	printf("\nВведите 1/2 - ");
+	while (scanf_s("%d", &choice) != 1 || (choice != 1 && choice != 2)) 
+	{
+		printf("Ошибка! Введите 1 или 2: ");
+		clear_buffer();
+
+	}
+	clear_buffer();
 	return choice;
 }
-int choose_output()                                                                                   // выбор источника вывода
-{
+int choose_output()                                                                                     // выбор источника вывода
+   {	
 	int choice;
 	printf("\nКуда вывести результат - ");
 	printf("\n1.Консоль");
 	printf("\n2.Файл");
-	printf("\nВведите номер пункта - ");
-	check_num(&choice);
+	printf("\nВведите 1/2 - ");
+	while (scanf_s("%d", &choice) != 1 || (choice != 1 && choice != 2)) 
+	{
+		printf("Ошибка! Введите 1 или 2: ");
+		clear_buffer();
+		
+	}
+	clear_buffer();
 	return choice;
 }
 
@@ -216,14 +266,23 @@ goods* create_ptr(int amount)                                                   
 	return ptr;
 }
 
-void free_mem(goods* names_ind, goods* ptr, int amount)                                            // функция для очистки памяти
+void free_mem(goods* names_ind, goods* ptr, int amount)
 {
-	if (ptr != NULL) 
+	if (ptr != NULL)
 	{
-		free(ptr); 
+		for (int i = 0; i < amount; i++)
+		{
+			if (ptr[i].name != NULL)
+			{
+				free(ptr[i].name); 
+				ptr[i].name = NULL;
+			}
+		}
+		free(ptr);
 	}
-	if (names_ind != NULL) 
+	if (names_ind != NULL)
 	{
+		
 		free(names_ind);
 	}
 }
@@ -240,17 +299,23 @@ goods* create_names_ind(int amount)                                             
 
 void choose_input(int amount, goods* ptr)                                                  // выбор источника ввода
 {
-	int temp;
-	printf("Выберите источника ввода: ");
+	int choice;
+	printf("\nВарианты ввода:");
 	printf("\n1.Консоль");
 	printf("\n2.Файл");
-	printf("\nВведите номер пункта - ");
-	scanf_s("%d", &temp);
-	if (temp == 1)
+	printf("\nВведите 1/2 - ");
+	while (scanf_s("%d", &choice) != 1 || (choice != 1 && choice != 2)) 
+	{
+		printf("Ошибка! Введите 1 или 2: ");
+		clear_buffer();
+		
+	}
+	clear_buffer();
+	if (choice == 1)
 	{
 		input(amount, ptr);                                                                 // ввод данных о товарах из консоли
 	}
-	else if (temp == 2)
+	else if (choice == 2)
 	{
 		input_from_file(amount, ptr);                                                       // ввод из файла
 	}

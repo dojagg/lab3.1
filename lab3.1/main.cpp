@@ -21,26 +21,26 @@ int main()
 	do
 	 {
 
-		amount = input_num();                                                      // ввод количества товаров
+		amount = input_num();                                                   
 
-		ptr = create_ptr(amount);                                                  // создание массива структур
+		ptr = create_ptr(amount);                                                
 
-		border_price = input_price();                                              // ввод ориентировочной цены
+		border_price = input_price();                                           
 		choose_input(amount, ptr);
-		highest_price = high_price(amount, ptr);                                   // поиск максимальной цены
 
-		names_ind = create_names_ind(amount);                                      // выделение памяти для массива товаров
-		
-		names_ind = under_price(amount, ptr, border_price, &end_size, names_ind);  // поиск товаров дешевле ориентировочной цены
+		output_all(ptr, amount);
 
-		sort = choose_sort();
+		highest_price = high_price(amount, ptr);                                  
+		names_ind = create_names_ind(amount);                                      
+		names_ind = under_price(amount, ptr, border_price, &end_size, names_ind);  
+
+		sort = choose_sort(border_price);
 		out = choose_output();
 		output(names_ind, highest_price, end_size, sort, out);
-		free_mem(names_ind, ptr, amount);                                          // освобожление выделенной памяти
-		printf("\n\nХотите продолжить? (y/Y): ");                                  // вывод предложения о продолжении программы
-
-		while (getchar() != '\n');
-		scanf_s("%c", &choice, 1);                                                 // сканирование выбора пользователя
+		free_mem(names_ind, ptr, amount);                                          
+		printf("\n\nХотите продолжить? (y/Y): ");                                  
+                                         	
+		scanf_s(" %c", &choice, 1);
 
 	} while (choice == 'y' || choice == 'Y');                                  
 
