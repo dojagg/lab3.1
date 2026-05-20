@@ -5,9 +5,9 @@
 #define MAX 15
 #define AGE 5
 #define NAME "constructor"
-#define FILE_NAME "text.txt"
+#define ALL_OUTPUT "all.txt"
 #define INPUT "input.txt"
-
+#define OUTPUT "output.txt"
 void input(int amount, goods* s)                                                             // функция для заполнения полей структуры
 {
 	printf("Введите сведения о %d товарах: \n", amount);
@@ -57,25 +57,52 @@ void input_from_file(int num, goods* ptr)                                       
 	fclose(fl);                                                                           // закрытие файла
 }		
 
-goods* high_price(int amount, goods* ptr)                                                   // функция для нахождения конструктора с максимальной ценой
-{
-	float highest = 0;                                                                     // начальное значение для максимальной цены
-	goods* highest_ptr = NULL;
+goods* high_price(int amount, goods* ptr, int* exp_size)                                                   // функция для нахождения конструктора с максимальной ценой
+{                                                                   
+	goods* highest_ptr = create_ptr(amount);
+	*exp_size = 0;
+	int count = 0;
+	float highest = 0;
 	for (int i = 0; i < amount; i++)
 	{
 		if (strcmp(ptr[i].name, NAME) == 0)                                                // является ли товар конструктором 
 		{
 			if (highest == 0 || ptr[i].price > highest)
 			{
-				highest_ptr = &ptr[i];
 				highest = ptr[i].price;
+				count = 0;
+				highest_ptr[count] = ptr[i];
+				count++;
 
+			}
+			else if (ptr[i].price == highest)
+			{
+				highest_ptr[count] = ptr[i];
+				count++;
 			}
 		}
 
 	}
-	return highest_ptr;                                                                              // вернуть значение максимальной цены
-}
+	if (count > 0)
+	{
+		
+		goods* temp = (goods*)realloc(highest_ptr, count * sizeof(goods));
+		if (temp != NULL)
+		{
+			highest_ptr = temp;
+		}
+		*exp_size = count;
+	}
+	else
+	{
+	
+		free(highest_ptr);
+		highest_ptr = NULL;
+	}
+
+	return highest_ptr;
+}                                                                      
+
 
 int input_num()                                                                                  // функция для ввода количества товаров
 {
@@ -111,9 +138,8 @@ goods* under_price(int amount, goods* ptr, float border_price, int* end_size, go
 	{
 		goods* temp = (goods*)realloc(names_ind, *end_size * sizeof(goods));
 		if (temp != NULL)
-		{
 			names_ind = temp;
-		}
+		
 	}
 	else
 	{
@@ -124,120 +150,72 @@ goods* under_price(int amount, goods* ptr, float border_price, int* end_size, go
 	return names_ind;
 }
 
-void output(goods* names_ind, goods* ptr, int end_size, int choice, int choice1)    // вывод информации о товарах
+void output(goods* items, int size, const char* header, int output_variant, const char* filename)
 {
 	FILE* fl = NULL;
-	if (choice1 == 1)                                                                                    // вывод в консоль 
-	{
-		fl = stdout;                                                                                     
-	}
-	else if (choice1 == 2)                                                                               // вывод в файл
-	{
-		fopen_s(&fl, FILE_NAME, "w");
-		if (fl == NULL)
-		{
-			exit(1);
-		}
-	}
-	if (fl == NULL)
-	{
-		exit(1);
-	}
-	if (choice == 1)                                                                                         // вывод информации о товарах
-	{
-		if (end_size == 0)
-		{
-			fprintf(fl, "\nNo products matching the price and age criteria!\n");                               // если нет подходящих товаров
-		}
-		else
-		{
-			fprintf(fl, "       Products for children %d years old with price below specified        \n", AGE); // вывод информации о товарах
-			fprintf(fl, "\n  N | Name              Price        Age (from - to)      \n");
-
-			for (int i = 0; i < end_size; i++)
-			{
-				fprintf(fl, " %2d | %-15s   %3.2f                 %d - %d     \n",
-					i + 1,
-					names_ind[i].name,
-					names_ind[i].price,
-					names_ind[i].min,
-					names_ind[i].max);
-			}
-			printf("\nWritted successfully!");
-		}
-	}	
-	else if (choice == 2)                                                                                 // вывод информации о конструкторе
-	{
-		if (ptr == NULL)
-		{
-			fprintf(fl, "\nNo constructor in the list");
-		}
-		else
-		{
-			fprintf(fl, "\nThe most expensive constructor\n");
-			fprintf(fl, "\n  N | Name              Price        Age (from - to)      \n");
-			fprintf(fl, "   | %-15s   %3.2f                 %d - %d     \n",
-				
-			    (*ptr).name,
-				(*ptr).price,
-				(*ptr).min,
-				(*ptr).max);
-			printf("\nWritted successfully!");
-		}
-		
-	}
-	if (choice1 == 2 && fl != NULL) 
-	{
-		fclose(fl);                                                                                      // закрытие файла
-	}
-}
-void output_all(goods* s, int amount)
-{
-	FILE* fl = NULL;
-	fopen_s(&fl, "output_all.txt", "w");
-	if (fl == NULL)
-	{
-		exit(1);
-	}
+	if (output_variant == 1) 
+		fl = stdout;
 	
-	if (amount == 0)
+	else if (output_variant == 2) 
 	{
-		fprintf(fl, "\nNo products matching the price and age criteria!\n");                               // если нет подходящих товаров
+		fopen_s(&fl, filename, "w");
+		if (fl == NULL)
+			exit(1);
 	}
+
+	if (fl == NULL)
+		exit(1);
+
+	if (size == 0 || items == NULL)
+		fprintf(fl, "\nNo products matching the criteria were found!\n");
+	
 	else
 	{
-		fprintf(fl, "       Products for children %d years old with price below specified        \n", AGE); // вывод информации о товарах
-		fprintf(fl, "\n  N | Name              Price        Age (from - to)      \n");
+		if (header != NULL)
+			fprintf(fl, "%s\n", header);
 
-		for (int i = 0; i < amount; i++)
+		fprintf(fl, " %2s | %-15s   %-10s   %s\n",
+			"N", "Name", "Price", "Age (from - to)");
+
+		for (int i = 0; i < size; i++)
 		{
-			fprintf(fl, " %2d | %-15s   %3.2f                 %d - %d     \n",
+			fprintf(fl, " %2d | %-15s   %-10.2f   %d - %d\n",
 				i + 1,
-				s[i].name,
-				s[i].price,
-				s[i].min,
-				s[i].max);
+				items[i].name,
+				items[i].price,
+				items[i].min,
+				items[i].max);
 		}
-		printf("\nWritted successfully!");
+
+		if (output_variant == 2)
+			printf("\nWritten successfully to %s!", filename);
+		
 	}
-	fclose(fl);
+
+	if (output_variant == 2 && fl != NULL)
+		fclose(fl); 
+	
 }
 
-int choose_sort(float border_price)                                                                      // выбор фильтра
+
+void choose_sort(float border_price, goods* names_ind, int names_size, goods* expensive, int exp_size, int out)                                                                      // выбор фильтра
 {
 	int choice;
 	printf("\nВарианты вывода:");
 	printf("\n1.Товары для детей %d лет с ценой < %.2f", AGE, border_price);
 	printf("\n2.Самый дорогой конструктор");
 	printf("\nВведите 1/2 - ");
-	while (scanf_s("%d", &choice) != 1 || (choice != 1 && choice != 2)) 
+	while (scanf_s("%d", &choice) != 1 || (choice != 1 && choice != 2))
 	{
 		printf("Ошибка! Введите 1 или 2: ");
 		clear_buffer();
 
 	}
 	clear_buffer();
-	return choice;
+	if (choice == 1)
+		output(names_ind, names_size, "Items for children", out, OUTPUT);
+	else if(choice ==2)
+		output(expensive, exp_size, "The most expensive", out, OUTPUT);
 }
 int choose_output()                                                                                     // выбор источника вывода
    {	
@@ -260,13 +238,12 @@ goods* create_ptr(int amount)                                                   
 {
 	goods* ptr = (goods*)calloc(amount , sizeof(goods));                                          // выделение памяти под массив структур
 	if (ptr == NULL)                                                                              // проверка выделения памяти
-	{
 		exit(1);
-	}
+	
 	return ptr;
 }
 
-void free_mem(goods* names_ind, goods* ptr, int amount)
+void free_mem(goods* names_ind, goods* expensive, goods* ptr, int amount)
 {
 	if (ptr != NULL)
 	{
@@ -281,19 +258,18 @@ void free_mem(goods* names_ind, goods* ptr, int amount)
 		free(ptr);
 	}
 	if (names_ind != NULL)
-	{
-		
 		free(names_ind);
-	}
+	if (expensive != NULL)
+		free(expensive);
+	
 }
 
 goods* create_names_ind(int amount)                                                         // функция для создания массива 
 {
 	goods* names_ind = (goods*)calloc(amount , sizeof(goods));                              // выделение памяти для массива индексов названий
 	if (names_ind == NULL)
-	{
 		exit(1);
-	}
+
 	return names_ind;
 }
 
@@ -312,13 +288,11 @@ void choose_input(int amount, goods* ptr)                                       
 	}
 	clear_buffer();
 	if (choice == 1)
-	{
 		input(amount, ptr);                                                                 // ввод данных о товарах из консоли
-	}
+
 	else if (choice == 2)
-	{
 		input_from_file(amount, ptr);                                                       // ввод из файла
-	}
+	
 }
 void check_num(int* num)                                                                    // проверка на положительное число
 {
